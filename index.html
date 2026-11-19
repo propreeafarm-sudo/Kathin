@@ -291,7 +291,6 @@ input:focus,select:focus,textarea:focus{outline:3px solid rgba(42,180,245,.35);b
 .qcard{border-radius:16px;box-shadow:var(--shadow)}
 footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3);font-size:12.5px;text-align:center}
 @media (max-width:980px){nav.tabs{border-radius:18px;position:static}.mast h1{font-size:24px}.logos img{width:70px;height:70px}.hero-main .big{font-size:44px}}
-
 </style>
 </head>
 <body>
@@ -311,14 +310,13 @@ footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3
   <nav class="tabs" aria-label="เมนู">
     <a href="#dashboard" data-view="dashboard">แดชบอร์ดผู้บริหาร</a>
     <a href="#form" data-view="form">📝 แจ้งยอด / ร่วมบริจาค</a>
-    <a href="#queue" data-view="queue" class="admin-only">รอตรวจสอบ<span class="badge" id="q-badge" style="display:none">0</span></a>
+    <a href="#queue" data-view="queue" class="admin-only">รายการที่แจ้ง<span class="badge" id="q-badge" style="display:none">0</span></a>
     <a href="#entry" data-view="entry" class="admin-only">ยอด รพ.สต.</a>
     <a href="#external" data-view="external" class="admin-only">ผู้บริจาคภายนอก</a>
     <a href="#report" data-view="report">รายงาน PDF / Word</a>
     <a href="#import" data-view="import" class="admin-only">นำเข้า / Excel</a>
     <a href="#guide" data-view="guide">ขั้นตอน</a>
     <span class="status-line" id="sync"><span class="dot"></span>กำลังเชื่อมต่อ…</span>
-    <button class="btn sm" id="login-btn">🔒 เข้าสู่ระบบเจ้าหน้าที่</button>
   </nav>
   <div class="banner warn" id="bnr"></div>
 
@@ -353,6 +351,7 @@ footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3
       </div>
       <div style="display:grid;gap:14px;align-content:start">
         <div class="card"><h2>๑๐ อันดับ รพ.สต. ยอดสูงสุด</h2><div class="hint">อนุโมทนาบุญ สาธุ</div><table><tbody id="top10"></tbody></table></div>
+        <div class="card"><h2>🔔 รายการแจ้งยอดล่าสุด</h2><div class="hint">อัปเดตทันทีเมื่อมีผู้กรอกแบบฟอร์ม</div><table><tbody id="feed"></tbody></table></div>
         <div class="card"><h2>ผู้บริจาคภายนอก ยอดสูงสุด</h2><div class="hint">หน่วยงานและบุคคลภายนอก ๑๐ อันดับ</div><table><tbody id="topx"></tbody></table></div>
       </div>
     </div>
@@ -380,7 +379,7 @@ footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3
     <div class="g2" style="grid-template-columns:1.3fr 1fr">
       <div class="card">
         <h2>แจ้งยอดเงินทำบุญ / ร่วมบริจาค</h2>
-        <div class="hint">สำหรับ รพ.สต. หน่วยงาน และบุคคลทั่วไป · เจ้าหน้าที่จะตรวจสอบกับหลักฐานก่อนรวมเข้ายอด</div>
+        <div class="hint">สำหรับ รพ.สต. หน่วยงาน และบุคคลทั่วไป · ยอดจะแสดงบนแดชบอร์ดทันทีหลังกดส่ง</div>
         <form id="p-form" class="formgrid">
           <div class="full"><div class="seg" role="radiogroup" aria-label="ประเภทผู้แจ้ง">
             <label><input type="radio" name="p-kind" value="hosp" checked><span>🏥 รพ.สต.</span></label>
@@ -394,7 +393,7 @@ footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3
           <label class="f">วันที่โอน / นำส่ง<input id="p-date" type="date"></label>
           <label class="f">ช่องทาง<select id="p-method"><option>โอนเงิน</option><option>เงินสด</option><option>นำส่งผ่านอำเภอ</option><option>เช็ค</option></select></label>
           <label class="f">ชื่อผู้แจ้ง<input id="p-sender" maxlength="100" required></label>
-          <label class="f">เบอร์ติดต่อ<input id="p-tel" maxlength="30" inputmode="tel"></label>
+          <label class="f">เบอร์ติดต่อ (ไม่แสดงบนหน้าเว็บ)<input id="p-tel" maxlength="30" inputmode="tel"></label>
           <label class="f">หมายเหตุ<input id="p-note" maxlength="200"></label>
           <div class="full"><div class="drop" id="p-drop">📎 แนบสลิป / หลักฐาน (รูปภาพ หรือ PDF ไม่เกิน 1 MB) — แตะเพื่อเลือกไฟล์</div><input type="file" id="p-file" accept="image/*,application/pdf" style="display:none"></div>
           <label class="full" id="p-rcpt-w" style="font-size:13.5px;display:none;gap:8px;align-items:center"><input type="checkbox" id="p-rcpt"> ประสงค์รับใบอนุโมทนาบัตร</label>
@@ -405,8 +404,8 @@ footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3
         <h2>ข้อมูลสำหรับผู้ร่วมทำบุญ</h2>
         <ul style="margin:8px 0 0;padding-left:20px;color:var(--ink-2)">
           <li>กำหนดตัดยอด: <b id="p-deadline">วันศุกร์ที่ ๒๐ พ.ย. ๒๕๖๙ เวลา ๑๖.๓๐ น.</b></li>
-          <li>ยอดที่แจ้งจะแสดงบนแดชบอร์ดหลังเจ้าหน้าที่ตรวจสอบหลักฐานแล้ว</li>
-          <li>รพ.สต. แจ้งยอดเพิ่มได้หลายครั้ง ระบบจะรวมยอดให้</li>
+          <li>กดส่งแล้ว ยอดขึ้นแดชบอร์ดทันที ไม่ต้องรอตรวจสอบ</li><li>กรอกยอดผิด แจ้งกองสาธารณสุขเพื่อยกเลิกรายการ แล้วกรอกใหม่</li>
+          <li>รพ.สต. แจ้งยอดเพิ่มได้หลายครั้ง ระบบจะบวกรวมให้ (กรอกเฉพาะยอดที่เพิ่ม)</li>
           <li>สอบถาม: กองสาธารณสุข อบจ.สกลนคร</li>
         </ul>
         <div id="p-ok" class="banner info" style="margin-top:14px"></div>
@@ -417,8 +416,8 @@ footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3
   <!-- QUEUE -->
   <section class="view" id="v-queue">
     <div class="card">
-      <h2>รายการแจ้งยอดที่รอตรวจสอบ</h2>
-      <div class="hint">ตรวจกับสลิปก่อนอนุมัติ · รพ.สต. เลือกได้ว่าจะ “บวกเพิ่ม” หรือ “แทนที่” ยอดเดิม</div>
+      <h2>รายการแจ้งยอดทั้งหมด</h2>
+      <div class="hint">ทุกรายการนับเข้ายอดทันที · ถ้ากรอกผิดหรือซ้ำ กด “ยกเลิกรายการนี้” ยอดจะหายจากแดชบอร์ด</div>
       <div id="qlist"></div>
     </div>
   </section>
@@ -523,14 +522,14 @@ footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3
   <section class="view" id="v-guide">
     <div class="steps">
       <div class="step"><span class="n">1</span><b>แจ้ง รพ.สต. และภาคี</b>ส่งลิงก์ <code>…/#form</code> ให้ รพ.สต. 149 แห่ง หน่วยงาน และผู้มีจิตศรัทธา แจ้งยอดพร้อมแนบสลิป</div>
-      <div class="step"><span class="n">2</span><b>ตรวจสอบ</b>เจ้าหน้าที่เข้าสู่ระบบ ตรวจสลิปในแท็บ “รอตรวจสอบ” แล้วกดอนุมัติ หรือบันทึกยอดเองโดยตรง</div>
+      <div class="step"><span class="n">2</span><b>ยอดขึ้นทันที</b>เมื่อกดส่ง ยอดจะรวมเข้าแดชบอร์ดและรายงานทันที ดูได้ที่ “รายการแจ้งยอดล่าสุด”</div>
       <div class="step"><span class="n">3</span><b>ติดตาม</b>คัดลอกรายชื่อ รพ.สต. ที่ยังไม่ส่งจากแดชบอร์ด ส่งเข้ากลุ่ม LINE เพื่อทวงถาม</div>
       <div class="step"><span class="n">4</span><b>รายงานผู้บริหาร</b>ส่งลิงก์แดชบอร์ดให้ผู้บริหารดูสด หรือออกรายงาน PDF / Word แนบบันทึกข้อความ</div>
     </div>
   </section>
 </div>
 
-<footer class="site">© ๒๕๖๙ กองสาธารณสุข องค์การบริหารส่วนจังหวัดสกลนคร · ระบบรวบรวมเงินทำบุญกฐินพระราชทาน</footer>
+<footer class="site">© ๒๕๖๙ กองสาธารณสุข องค์การบริหารส่วนจังหวัดสกลนคร · ระบบรวบรวมเงินทำบุญกฐินพระราชทาน<br><button class="btn sm" id="login-btn" style="margin-top:10px;font-size:12px;opacity:.75">🔒 สำหรับเจ้าหน้าที่</button></footer>
 <div class="tip" id="tip"></div>
 <div class="toast" id="toast"></div>
 
@@ -694,7 +693,7 @@ function renderExt(){
   const A=agg();const q=$("#xq").value.trim().toLowerCase(),f=$("#xf").value;
   const list=[...A.xs].filter(x=>(!q||String(x.name).toLowerCase().includes(q))&&(!f||(f==="org")===(x.kind==="org"))).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   $("#x-sum").textContent=`หน่วยงาน ${A.org.length} ราย ${fmt(A.os)} บาท · บุคคล ${A.per.length} ราย ${fmt(A.ps)} บาท · รวม ${fmt(A.os+A.ps)} บาท`;
-  $("#xtable").innerHTML=list.length?list.map((x,i)=>`<tr><td class="muted num">${i+1}</td><td>${esc(x.name)}${x.receipt?'<div class="muted" style="font-size:12px">📜 ขอใบอนุโมทนาบัตร</div>':""}${x.slip?`<div class="links"><a data-slip="${esc(x.slip)}" style="font-size:12px">🧾 สลิป</a></div>`:""}</td><td><span class="pill ${x.kind==="org"?"org":"per"}">${KIND[x.kind]||"บุคคล"}</span></td><td class="r num" style="font-weight:700">${fmt(x.amount)}</td><td style="font-size:13px">${esc([thDate(x.date),x.method].filter(Boolean).join(" · "))}${x.note?`<div class="muted" style="font-size:12px">${esc(x.note)}</div>`:""}</td><td><button class="btn sm" data-x="${esc(x.id)}" ${canWrite?"":"disabled"}>แก้ไข</button></td></tr>`).join(""):`<tr><td colspan="6" class="empty" style="text-align:center">ยังไม่มีรายการ</td></tr>`;
+  $("#xtable").innerHTML=list.length?list.map((x,i)=>`<tr><td class="muted num">${i+1}</td><td>${esc(x.name)}${x.receipt?'<div class="muted" style="font-size:12px">📜 ขอใบอนุโมทนาบัตร</div>':""}${x.slip?`<div class="links"><a data-slip="${esc(x.slip)}" style="font-size:12px">🧾 สลิป</a></div>`:""}</td><td><span class="pill ${x.kind==="org"?"org":"per"}">${KIND[x.kind]||"บุคคล"}</span></td><td class="r num" style="font-weight:700">${fmt(x.amount)}</td><td style="font-size:13px">${esc([thDate(x.date),x.method].filter(Boolean).join(" · "))}${x.note?`<div class="muted" style="font-size:12px">${esc(x.note)}</div>`:""}</td><td>${x.fromForm?'<span class="muted" style="font-size:12px">จากแบบฟอร์ม</span>':`<button class="btn sm" data-x="${esc(x.id)}" ${canWrite?"":"disabled"}>แก้ไข</button>`}</td></tr>`).join(""):`<tr><td colspan="6" class="empty" style="text-align:center">ยังไม่มีรายการ</td></tr>`;
 }
 ["#xq","#xf"].forEach(s=>$(s).addEventListener("input",renderExt));
 $("#xtable").addEventListener("click",e=>{const b=e.target.closest("[data-x]");if(!b)return;const x=ext[b.dataset.x];if(!x)return;xEdit=b.dataset.x;
@@ -851,13 +850,23 @@ $("#dl-xlsx").onclick=async()=>{
   await saveFile(`ยอดกฐินพระราชทาน2569_${stamp()}.xlsx`,new Blob([XLSX.write(wb,{type:"array",bookType:"xlsx"})]))};
 // ================= ส่วนเชื่อมต่อฐานข้อมูล (Firebase) =================
 let RAW={pub:{hosp:{},ext:{},cfg:{}},priv:{hospNotes:{},ext:{}},queue:{}};
-let queueList=[];
+let queueList=[],allEntries=[],entrySum={};
 function rebuild(){
   const ph=RAW.pub.hosp||{},pe=RAW.pub.ext||{},pn=RAW.priv.hospNotes||{},px=RAW.priv.ext||{};
-  const r={};Object.keys(ph).forEach(c=>{if(H.some(h=>h[1]===c))r[c]={...ph[c],...(pn[c]||{})}});rec=r;
-  const x={};Object.keys(pe).forEach(id=>x[id]={...pe[id],...(px[id]||{})});ext=x;
+  // ยอดที่ รพ.สต./ผู้บริจาคกรอกผ่านแบบฟอร์ม (queue) นับเข้าแดชบอร์ดทันที ยกเว้นรายการที่ถูกยกเลิก
+  allEntries=Object.entries(RAW.queue||{}).map(([id,q])=>({id,...q})).filter(q=>q&&Number(q.amount)>0).sort((a,b)=>(b.at||0)-(a.at||0));
+  const live=allEntries.filter(q=>q.status!=="rejected");
+  entrySum={};const r={};
+  live.filter(q=>q.kind==="hosp"&&H.some(h=>h[1]===q.code)).slice().reverse().forEach(q=>{entrySum[q.code]=(entrySum[q.code]||0)+Number(q.amount);
+    r[q.code]={amount:entrySum[q.code],date:q.date||"",method:q.method||"",updatedAt:q.at||0,entries:((r[q.code]&&r[q.code].entries)||0)+1}});
+  Object.keys(ph).forEach(c=>{if(!H.some(h=>h[1]===c))return;const adj=Number(ph[c].amount)||0;const b=r[c]||{amount:0,entries:0};
+    r[c]={...b,...ph[c],...(pn[c]||{}),amount:Math.round(((b.amount||0)+adj)*100)/100,adj,entries:b.entries}});
+  rec=r;
+  const x={};Object.keys(pe).forEach(id=>x[id]={...pe[id],...(px[id]||{})});
+  live.filter(q=>q.kind!=="hosp").forEach(q=>x[q.id]={kind:q.kind==="org"?"org":"person",name:q.name,amount:Number(q.amount),date:q.date||"",method:q.method||"",receipt:!!q.receipt,createdAt:q.at||0,fromForm:true});
+  ext=x;
   settings={...(RAW.pub.cfg||{})};
-  queueList=Object.entries(RAW.queue||{}).map(([id,q])=>({id,...q})).filter(q=>q.status==="pending").sort((a,b)=>(a.at||0)-(b.at||0));
+  queueList=allEntries;
   if(settings.target&&document.activeElement!==$("#target"))$("#target").value=settings.target;
   if(settings.deadline){$("#p-deadline").textContent=settings.deadline;if(document.activeElement!==$("#deadline"))$("#deadline").value=settings.deadline}
   [["#r-name","reporter"],["#r-pos","position"],["#r-unit","unit"]].forEach(([s,k])=>{if(settings[k]&&document.activeElement!==$(s)&&!$(s).dataset.touched)$(s).value=settings[k]});
@@ -871,7 +880,8 @@ async function put(col,id,body,map){
   const by=me&&me.email||"";
   const u={};
   if(col==="donations"){
-    u[`public/hosp/${id}`]=hospPub(body);
+    const adj=Math.round((Number(body.amount||0)-(entrySum[id]||0))*100)/100;
+    u[`public/hosp/${id}`]=adj!==0?{amount:adj,date:body.date||"",method:body.method||"",updatedAt:nowMs()}:null;
     u[`private/hospNotes/${id}`]=body.amount>0&&(body.note||by)?{note:body.note||"",updatedBy:by}:null;
   }else{
     u[`public/ext/${id}`]={kind:body.kind==="org"?"org":"person",name:String(body.name||"").slice(0,150),amount:body.amount,date:body.date||"",method:body.method||"",receipt:!!body.receipt,createdAt:body.createdAt||nowMs(),updatedAt:nowMs()};
@@ -883,7 +893,7 @@ async function put(col,id,body,map){
 async function del(col,id,map){
   if(!DL||!isAdmin)throw{code:"PERMISSION_DENIED"};
   const u={};
-  if(col==="donations"){u[`public/hosp/${id}`]=null;u[`private/hospNotes/${id}`]=null}
+  if(col==="donations"){const adj=-(entrySum[id]||0);u[`public/hosp/${id}`]=adj?{amount:adj,date:"",method:"",updatedAt:nowMs()}:null;u[`private/hospNotes/${id}`]=null}
   else{u[`public/ext/${id}`]=null;u[`private/ext/${id}`]=null}
   delete map[id];renderAll();await DL.update(u);
 }
@@ -902,6 +912,15 @@ let cfgT;["#r-name","#r-pos","#r-unit"].forEach(s=>$(s).addEventListener("input"
 $("#r-type").addEventListener("input",renderPreview);
 
 // ================= แบบฟอร์มสาธารณะ =================
+const IMGBB_KEY="f03593c9c505d2fa413f9e24b1cdf14b"; // คีย์ imgbb สำหรับเก็บรูปสลิป
+const IMGBB_ALBUM=""; // รหัสอัลบั้ม "กฐิน อบจ." จากลิงก์ https://ibb.co/album/<รหัส> (ใส่ระหว่างเครื่องหมายคำพูด)
+async function uploadImgbb(dataUrl,name){
+  const fd=new FormData();fd.append("image",dataUrl.split(",")[1]);if(name)fd.append("name",name.slice(0,80));if(IMGBB_ALBUM)fd.append("album_id",IMGBB_ALBUM);
+  const r=await fetch("https://api.imgbb.com/1/upload?key="+IMGBB_KEY,{method:"POST",body:fd});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok||!j||!j.success||!j.data)throw new Error("imgbb upload failed "+r.status);
+  return{url:j.data.url||j.data.display_url,del:j.data.delete_url||""};
+}
 let slip=null;
 const pKind=()=>document.querySelector("input[name=p-kind]:checked").value;
 function pSync(){const k=pKind();$("#p-dist-w").style.display=$("#p-code-w").style.display=k==="hosp"?"":"none";$("#p-name-w").style.display=k==="hosp"?"none":"";$("#p-rcpt-w").style.display=k==="hosp"?"none":"flex"}
@@ -936,10 +955,19 @@ $("#p-form").addEventListener("submit",async e=>{e.preventDefault();
   let code="",name=$("#p-name").value.trim();
   if(k==="hosp"){const h=H.find(x=>x[1]===$("#p-code").value);if(!h){toast("กรุณาเลือก รพ.สต.");return}code=h[1];name=h[3]}
   else if(!name){toast("กรุณาใส่ชื่อหน่วยงาน / ผู้บริจาค");return}
-  const q={kind:k,code,name:name.slice(0,150),amount:amt,date:$("#p-date").value,method:$("#p-method").value,sender:$("#p-sender").value.trim().slice(0,100),tel:$("#p-tel").value.trim().slice(0,30),note:$("#p-note").value.trim().slice(0,200),receipt:k!=="hosp"&&$("#p-rcpt").checked,hasSlip:!!slip,status:"pending"};
+  const q={kind:k,code,name:name.slice(0,150),amount:amt,date:$("#p-date").value,method:$("#p-method").value,receipt:k!=="hosp"&&$("#p-rcpt").checked,hasSlip:!!slip,status:"pending"};
+  const contact={sender:$("#p-sender").value.trim().slice(0,100),tel:$("#p-tel").value.trim().slice(0,30),note:$("#p-note").value.trim().slice(0,200)};
+  let dbSlip=slip;
   $("#p-send").disabled=true;$("#p-send").textContent="กำลังส่ง…";
-  try{const id=await DL.submit(q,slip);
-    $("#p-ok").innerHTML=`✅ <b>ได้รับข้อมูลแล้ว</b> อนุโมทนาบุญ สาธุ 🙏<br>${esc(name)} · ${fmt(amt)} บาท<br><span class="muted">เลขอ้างอิง ${esc(id.slice(-8).toUpperCase())} · ยอดจะแสดงบนแดชบอร์ดเมื่อเจ้าหน้าที่ตรวจสอบแล้ว</span>`;$("#p-ok").className="banner info show";
+  try{
+    if(slip&&slip.type.startsWith("image/")){ // รูปภาพ → เก็บที่ imgbb (ถ้าไม่สำเร็จจะเก็บในฐานข้อมูลแทน)
+      $("#p-send").textContent="กำลังอัปโหลดสลิป…";
+      try{const up=await uploadImgbb(slip.data,"kathin2569_"+(code||"ext")+"_"+todayISO());contact.slipUrl=up.url;contact.slipDel=up.del;dbSlip=null}
+      catch(e){console.warn(e)}
+      $("#p-send").textContent="กำลังส่ง…";
+    }
+    const id=await DL.submit(q,dbSlip,contact);
+    $("#p-ok").innerHTML=`✅ <b>ได้รับข้อมูลแล้ว</b> อนุโมทนาบุญ สาธุ 🙏<br>${esc(name)} · ${fmt(amt)} บาท<br><span class="muted">เลขอ้างอิง ${esc(id.slice(-8).toUpperCase())} · ยอดแสดงบนแดชบอร์ดเรียบร้อยแล้ว</span> <a href="#dashboard">ดูแดชบอร์ด →</a>`;$("#p-ok").className="banner info show";
     $("#p-amt").value="";$("#p-note").value="";$("#p-file").value="";slip=null;$("#p-drop").classList.remove("has");$("#p-drop").textContent=DROP_TXT;if(k!=="hosp")$("#p-name").value="";
     toast("ส่งข้อมูลเรียบร้อย ✓");
   }catch(err){console.warn(err);toast("ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่")}
@@ -948,19 +976,18 @@ $("#p-form").addEventListener("submit",async e=>{e.preventDefault();
 
 // ================= ตรวจสอบรายการ =================
 function renderQueue(){
-  const n=queueList.length;$("#q-badge").textContent=n;$("#q-badge").style.display=n?"":"none";
+  const n=allEntries.length;$("#q-badge").textContent=n;$("#q-badge").style.display=n?"":"none";
   if(!isAdmin){$("#qlist").innerHTML="";return}
-  $("#qlist").innerHTML=n?queueList.map(q=>`<div class="qcard"><div class="top"><div><span class="pill ${q.kind==="hosp"?"ok":q.kind==="org"?"org":"per"}">${q.kind==="hosp"?"รพ.สต.":KIND[q.kind]}</span> <b>${esc(q.name)}</b>${q.code?` <span class="muted">(${esc(q.code)})</span>`:""}
-    <div class="muted" style="font-size:13px">แจ้งโดย ${esc(q.sender||"-")} ${q.tel?"· "+esc(q.tel):""} · ${q.at?new Date(q.at).toLocaleString("th-TH",{dateStyle:"short",timeStyle:"short"}):""} · ${esc(thDate(q.date))} ${esc(q.method||"")}${q.receipt?" · 📜 ขอใบอนุโมทนาบัตร":""}</div>
-    ${q.note?`<div style="font-size:13px">${esc(q.note)}</div>`:""}${q.hasSlip?`<div class="links"><a data-slip="${esc(q.id)}">🧾 ดูสลิป</a></div>`:`<div class="muted" style="font-size:12.5px">ไม่มีสลิปแนบ</div>`}</div>
-    <div style="text-align:right"><div class="amt num">${fmt(q.amount)} บาท</div>${q.kind==="hosp"&&isDone(q.code)?`<div class="muted" style="font-size:12px">ยอดเดิม ${fmt(rec[q.code].amount)} บาท</div>`:""}</div></div>
-    <div class="toolbar" style="margin:10px 0 0;justify-content:flex-end">
-      <button class="btn sm" data-q="${esc(q.id)}" data-a="reject" style="color:var(--crit)">ไม่อนุมัติ</button>
-      ${q.kind==="hosp"?`<button class="btn sm" data-q="${esc(q.id)}" data-a="replace">อนุมัติ (แทนที่ยอดเดิม)</button><button class="btn sm primary" data-q="${esc(q.id)}" data-a="add">อนุมัติ (บวกเพิ่ม)</button>`:`<button class="btn sm primary" data-q="${esc(q.id)}" data-a="add">อนุมัติ</button>`}
-    </div></div>`).join(""):`<div class="empty">ไม่มีรายการรอตรวจสอบ ✓</div>`;
+  $("#qlist").innerHTML=n?allEntries.map(q=>{const c=(RAW.priv.contacts||{})[q.id]||{},rj=q.status==="rejected";return `<div class="qcard" style="${rj?"opacity:.55":""}"><div class="top"><div><span class="pill ${q.kind==="hosp"?"ok":q.kind==="org"?"org":"per"}">${q.kind==="hosp"?"รพ.สต.":KIND[q.kind]}</span> <b>${esc(q.name)}</b>${q.code?` <span class="muted">(${esc(q.code)})</span>`:""} ${rj?'<span class="pill no">ยกเลิกแล้ว</span>':""}
+    <div class="muted" style="font-size:13px">${esc(c.sender||q.sender||"-")} ${(c.tel||q.tel)?"· "+esc(c.tel||q.tel):""} · ${q.at?new Date(q.at).toLocaleString("th-TH",{dateStyle:"short",timeStyle:"short"}):""} · ${esc(thDate(q.date))} ${esc(q.method||"")}${q.receipt?" · 📜 ขอใบอนุโมทนาบัตร":""}</div>
+    ${(c.note||q.note)?`<div style="font-size:13px">${esc(c.note||q.note)}</div>`:""}${q.hasSlip?`<div class="links"><a data-slip="${esc(q.id)}">🧾 ดูสลิป</a></div>`:""}</div>
+    <div style="text-align:right"><div class="amt num">${fmt(q.amount)} บาท</div></div></div>
+    <div class="toolbar" style="margin:10px 0 0;justify-content:flex-end">${rj?`<button class="btn sm" data-q="${esc(q.id)}" data-a="restore">นำกลับมานับยอด</button>`:`<button class="btn sm" data-q="${esc(q.id)}" data-a="reject" style="color:var(--crit)">ยกเลิกรายการนี้ (ไม่นับยอด)</button>`}</div></div>`}).join(""):`<div class="empty">ยังไม่มีรายการแจ้งยอด</div>`;
 }
 async function showSlip(id){
   $("#slip-body").innerHTML='<div class="muted">กำลังโหลด…</div>';$("#slip-dlg").showModal();
+  const cu=((RAW.priv.contacts||{})[id]||{}).slipUrl;
+  if(cu){$("#slip-body").innerHTML=`<img class="slipimg" src="${esc(cu)}" alt="สลิป"><div class="links" style="text-align:center"><a href="${esc(cu)}" target="_blank" rel="noopener">เปิดรูปขนาดเต็ม (imgbb)</a></div>`;return}
   try{const s=await DL.getSlip(id);if(!s||!s.data){$("#slip-body").innerHTML='<div class="muted">ไม่พบไฟล์สลิป</div>';return}
     if(String(s.type).startsWith("image/"))$("#slip-body").innerHTML=`<img class="slipimg" src="${esc(s.data)}" alt="สลิป">`;
     else{const b=await (await fetch(s.data)).blob();const u=URL.createObjectURL(b);$("#slip-body").innerHTML=`<a class="btn primary" href="${u}" target="_blank" rel="noopener">เปิดไฟล์ PDF</a>`}
@@ -970,16 +997,9 @@ $("#slip-close").onclick=()=>$("#slip-dlg").close();
 $("#qlist").addEventListener("click",async e=>{
   const sl=e.target.closest("[data-slip]");if(sl){showSlip(sl.dataset.slip);return}
   const b=e.target.closest("[data-q]");if(!b)return;const a=b.dataset.a,q=queueList.find(x=>x.id===b.dataset.q);if(!q)return;
-  if(a==="reject"&&!await confirmBox("ไม่อนุมัติรายการนี้?","รายการจะถูกทำเครื่องหมาย “ไม่อนุมัติ” (ไม่ถูกลบ)"))return;
-  const by=me&&me.email||"",u={[`queue/${q.id}/status`]:a==="reject"?"rejected":"approved",[`queue/${q.id}/reviewedAt`]:nowMs(),[`queue/${q.id}/reviewedBy`]:by};
-  const note=[q.sender&&("ผู้แจ้ง "+q.sender),q.tel,q.note,q.hasSlip&&("สลิป #"+q.id.slice(-8).toUpperCase())].filter(Boolean).join(" · ").slice(0,200);
-  if(a!=="reject"){
-    if(q.kind==="hosp"){const old=isDone(q.code)?Number(rec[q.code].amount):0,nv=Math.round((a==="replace"?q.amount:old+q.amount)*100)/100;
-      u[`public/hosp/${q.code}`]={amount:nv,date:q.date||todayISO(),method:q.method||"",updatedAt:nowMs()};u[`private/hospNotes/${q.code}`]={note,updatedBy:by,slip:q.hasSlip?q.id:""};}
-    else{u[`public/ext/${q.id}`]={kind:q.kind==="org"?"org":"person",name:q.name,amount:q.amount,date:q.date||"",method:q.method||"",receipt:!!q.receipt,createdAt:q.at||nowMs(),updatedAt:nowMs()};
-      u[`private/ext/${q.id}`]={tel:q.tel||"",note:[q.sender&&("ผู้แจ้ง "+q.sender),q.note].filter(Boolean).join(" · ").slice(0,200),slip:q.hasSlip?q.id:"",updatedBy:by};}
-  }
-  b.disabled=true;try{await DL.update(u);toast(a==="reject"?"บันทึกว่าไม่อนุมัติแล้ว":"อนุมัติแล้ว ✓")}catch(err){writeErr(err);b.disabled=false}
+  if(a==="reject"&&!await confirmBox("ยกเลิกรายการนี้?","ยอดของรายการนี้จะไม่ถูกนับในแดชบอร์ดและรายงาน (ข้อมูลยังเก็บไว้ นำกลับได้)"))return;
+  const by=me&&me.email||"",u={[`queue/${q.id}/status`]:a==="reject"?"rejected":"pending",[`queue/${q.id}/reviewedAt`]:nowMs(),[`queue/${q.id}/reviewedBy`]:by};
+  b.disabled=true;try{await DL.update(u);toast(a==="reject"?"ยกเลิกรายการแล้ว":"นำกลับมานับยอดแล้ว ✓")}catch(err){writeErr(err);b.disabled=false}
 });
 $("#xtable").addEventListener("click",e=>{const sl=e.target.closest("[data-slip]");if(sl){e.stopPropagation();showSlip(sl.dataset.slip)}},true);
 
@@ -1002,7 +1022,9 @@ function setAuth(user,admin){
 }
 
 // ================= เริ่มทำงาน =================
-function renderAll(){renderDash();renderEntry();renderExt();renderQueue();renderPreview()}
+function renderFeed(){const el=$("#feed");if(!el)return;const l=allEntries.filter(q=>q.status!=="rejected").slice(0,8);
+  el.innerHTML=l.length?l.map(q=>`<tr><td>${esc(q.name)}<div class="muted" style="font-size:12px">${q.kind==="hosp"?"อ."+esc((H.find(h=>h[1]===q.code)||[])[2]||""):KIND[q.kind]||""} · ${q.at?new Date(q.at).toLocaleString("th-TH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):""} น.</div></td><td class="r num" style="font-weight:700;white-space:nowrap">+${fmt(q.amount)}</td></tr>`).join(""):`<tr><td class="empty" style="border:0">ยังไม่มีรายการแจ้งยอด</td></tr>`}
+function renderAll(){renderFeed();renderDash();renderEntry();renderExt();renderQueue();renderPreview()}
 function startApp(dl){
   DL=dl;
   const live=()=>{$("#sync").className="status-line live";$("#sync").innerHTML='<span class="dot"></span>ออนไลน์ · อัปเดตอัตโนมัติ '+new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})+" น."};
@@ -1010,8 +1032,9 @@ function startApp(dl){
   DL.onConn(ok=>{if(ok){clearTimeout(t);live()}else{$("#sync").className="status-line";$("#sync").innerHTML='<span class="dot"></span>ออฟไลน์ — กำลังเชื่อมต่อใหม่…'}});
   DL.onPublic(v=>{RAW.pub={hosp:{},ext:{},cfg:{},...(v||{})};live();rebuild()},e=>{console.warn(e);const pd=/permission/i.test(String(e&&(e.code||e.message)));$("#bnr").innerHTML=pd?'⚠️ <b>ฐานข้อมูลยังไม่อนุญาตให้อ่าน (permission denied)</b> — ผู้ดูแลต้องเพิ่มกฎของ <code class="uid">kathin2569</code> ใน Firebase Console → Realtime Database → Rules แล้วกด Publish จากนั้นรีเฟรชหน้านี้':'⚠️ อ่านข้อมูลไม่ได้: '+esc(String(e&&(e.code||e.message)||e));$("#bnr").className="banner show warn";$("#sync").className="status-line";$("#sync").innerHTML='<span class="dot"></span>อ่านข้อมูลไม่ได้'});
   DL.onAuth((user,admin)=>{setAuth(user,admin);
-    if(admin){DL.onPrivate(v=>{RAW.priv={hospNotes:{},ext:{},...(v||{})};rebuild()});DL.onQueue(v=>{RAW.queue=v||{};rebuild()})}
-    else{DL.offAdmin();RAW.priv={hospNotes:{},ext:{}};RAW.queue={};rebuild()}});
+    if(admin){DL.onPrivate(v=>{RAW.priv={hospNotes:{},ext:{},...(v||{})};rebuild()})}
+    else{DL.offAdmin();RAW.priv={hospNotes:{},ext:{}};rebuild()}});
+  DL.onQueue(v=>{RAW.queue=v||{};rebuild()});
 }
 xReset();$("#p-date").value=todayISO();route();tick();renderAll();
 if(window.__MOCK_DL)startApp(window.__MOCK_DL);
@@ -1044,8 +1067,13 @@ let adminRefs = [];
 const DL = {
   onConn(cb) { onValue(ref(db, ".info/connected"), s => cb(!!s.val())); },
   onPublic(cb, err) { onValue(child(base, "public"), s => cb(s.val()), err); },
-  onPrivate(cb) { const r = child(base, "private"); adminRefs.push(r); onValue(r, s => cb(s.val()), e => console.warn(e)); },
-  onQueue(cb) { const r = child(base, "queue"); adminRefs.push(r); onValue(r, s => cb(s.val()), e => console.warn(e)); },
+  onPrivate(cb) {
+    let priv = {}, contacts = {}; const emit = () => cb({ ...priv, contacts });
+    const r = child(base, "private"), c = child(base, "contacts"); adminRefs.push(r, c);
+    onValue(r, s => { priv = s.val() || {}; emit(); }, e => console.warn(e));
+    onValue(c, s => { contacts = s.val() || {}; emit(); }, e => console.warn(e));
+  },
+  onQueue(cb) { onValue(child(base, "queue"), s => cb(s.val()), e => console.warn(e)); },
   offAdmin() { adminRefs.forEach(r => off(r)); adminRefs = []; },
   onAuth(cb) {
     onAuthStateChanged(auth, async user => {
@@ -1059,11 +1087,12 @@ const DL = {
   logout() { return signOut(auth); },
   update(paths) { return update(base, paths); },
   async getSlip(id) { return (await get(child(base, "slips/" + id))).val(); },
-  async submit(q, slip) {
+  async submit(q, slip, contact) {
     const id = push(child(base, "queue")).key;
     const u = {};
     u["queue/" + id] = { ...q, at: serverTimestamp() };
     if (slip) u["slips/" + id] = { type: slip.type, data: slip.data };
+    if (contact && (contact.sender || contact.tel || contact.note)) u["contacts/" + id] = contact;
     await update(base, u);
     return id;
   },
