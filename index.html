@@ -351,9 +351,8 @@ footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3
         <div id="dbars"></div>
       </div>
       <div style="display:grid;gap:14px;align-content:start">
-        <div class="card"><h2>๑๐ อันดับ รพ.สต. ยอดสูงสุด</h2><div class="hint">อนุโมทนาบุญ สาธุ</div><table><tbody id="top10"></tbody></table></div>
         <div class="card"><h2>🔔 รายการแจ้งยอดล่าสุด</h2><div class="hint">อัปเดตทันทีเมื่อมีผู้กรอกแบบฟอร์ม</div><table><tbody id="feed"></tbody></table></div>
-        <div class="card"><h2>ผู้บริจาคภายนอก ยอดสูงสุด</h2><div class="hint">หน่วยงานและบุคคลภายนอก ๑๐ อันดับ</div><table><tbody id="topx"></tbody></table></div>
+        <div class="card"><h2>ผู้บริจาคภายนอก</h2><div class="hint">หน่วยงานและบุคคลภายนอกที่ร่วมทำบุญ · อนุโมทนาบุญ สาธุ</div><div style="max-height:420px;overflow:auto"><table><tbody id="topx"></tbody></table></div></div>
       </div>
     </div>
     <div class="card" style="margin-bottom:14px">
@@ -670,9 +669,9 @@ function renderDash(){
   $("#dtable").innerHTML=Object.values(A.by).map(a=>{const p=a.done/a.n*100;return `<tr><td>${esc(a.d)}</td><td class="r num">${a.n}</td><td class="r num">${a.done}</td><td><span class="mini"><i style="width:${p}%"></i></span><span class="num" style="font-size:12.5px">${p.toFixed(0)}%</span> ${a.done===a.n?'<span class="pill ok">✓ ครบ</span>':''}</td><td class="r num">${fmt(a.sum)}</td><td class="r num">${a.done?fmt0(a.sum/a.done):"–"}</td></tr>`}).join("");
   $("#dfoot").innerHTML=`<tr><td>รวม รพ.สต. ทั้งจังหวัด</td><td class="r num">149</td><td class="r num">${A.done}</td><td class="num" style="font-size:12.5px">${(A.done/149*100).toFixed(1)}%</td><td class="r num">${fmt(A.hs)}</td><td class="r num">${A.done?fmt0(A.hs/A.done):"–"}</td></tr>`;
   const top=H.filter(h=>isDone(h[1])).sort((a,b)=>rec[b[1]].amount-rec[a[1]].amount).slice(0,10);
-  $("#top10").innerHTML=top.length?top.map((h,i)=>`<tr><td class="rank num ${i<3?"t3":""}">${i+1}</td><td>${esc(h[3])}<div class="muted" style="font-size:12px">อ.${esc(h[2])}</div></td><td class="r num" style="font-weight:700">${fmt(rec[h[1]].amount)}</td></tr>`).join(""):`<tr><td class="empty" style="border:0">ยังไม่มีข้อมูล</td></tr>`;
-  const tx=[...A.xs].sort((a,b)=>b.amount-a.amount).slice(0,10);
-  $("#topx").innerHTML=tx.length?tx.map((x,i)=>`<tr><td class="rank num ${i<3?"t3":""}">${i+1}</td><td>${esc(x.name)}<div><span class="pill ${x.kind==="org"?"org":"per"}">${KIND[x.kind]||"บุคคล"}</span></div></td><td class="r num" style="font-weight:700">${fmt(x.amount)}</td></tr>`).join(""):`<tr><td class="empty" style="border:0">ยังไม่มีผู้บริจาคภายนอก — เพิ่มได้ที่แท็บ “ผู้บริจาคภายนอก”</td></tr>`;
+  if($("#top10"))$("#top10").innerHTML=top.length?top.map((h,i)=>`<tr><td class="rank num ${i<3?"t3":""}">${i+1}</td><td>${esc(h[3])}<div class="muted" style="font-size:12px">อ.${esc(h[2])}</div></td><td class="r num" style="font-weight:700">${fmt(rec[h[1]].amount)}</td></tr>`).join(""):`<tr><td class="empty" style="border:0">ยังไม่มีข้อมูล</td></tr>`;
+  const tx=[...A.xs].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  $("#topx").innerHTML=tx.length?tx.map((x,i)=>`<tr><td class="num muted" style="width:28px">${i+1}</td><td>${esc(x.name)}<div><span class="pill ${x.kind==="org"?"org":"per"}">${KIND[x.kind]||"บุคคล"}</span></div></td><td class="r num" style="font-weight:700">${fmt(x.amount)}</td></tr>`).join(""):`<tr><td class="empty" style="border:0">ยังไม่มีผู้บริจาคภายนอก — เพิ่มได้ที่แท็บ “ผู้บริจาคภายนอก”</td></tr>`;
   const pend=H.filter(h=>!isDone(h[1]));$("#pend-n").textContent=pend.length+" แห่ง";
   $("#pending").innerHTML=pend.length?DISTRICTS.map(d=>{const l=pend.filter(h=>h[2]===d);return l.length?`<div class="grp"><b>อ.${esc(d)}</b> <span class="muted">(${l.length})</span><ul>${l.map(h=>`<li>${esc(h[3])}</li>`).join("")}</ul></div>`:""}).join(""):`<span class="pill ok">✓ ส่งยอดครบทั้ง 149 แห่งแล้ว</span>`;
 }
