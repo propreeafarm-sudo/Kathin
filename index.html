@@ -431,10 +431,17 @@ footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3
         </form>
         <div id="f2-ok" class="banner info" style="margin-top:12px"></div>
       </div>
-      <div class="card" style="align-self:start">
+      <div style="display:grid;gap:14px;align-content:start">
+      <div class="card">
         <h2>ประวัติการแจ้งยอดของ รพ.สต. นี้</h2>
         <div class="hint">“+” คือยอดที่แจ้งเพิ่ม · “=” คือการแก้ไขยอดรวม</div>
         <table><tbody id="f2-hist"></tbody></table>
+      </div>
+      <div class="card">
+        <h2>↪ รพ.สต. ที่ลงผิดช่อง (หน่วยงาน/บุคคลภายนอก)</h2>
+        <div class="hint">ถ้า รพ.สต. เผลอกรอกในช่อง “หน่วยงาน” หรือ “บุคคล” กด “ย้ายไป รพ.สต.” แล้วเลือก รพ.สต. ที่ถูกต้อง ยอดจะย้ายทันทีโดยไม่ต้องกรอกใหม่</div>
+        <div style="max-height:360px;overflow:auto"><table><tbody id="mv-list"></tbody></table></div>
+      </div>
       </div>
     </div>
   </section>
@@ -588,6 +595,18 @@ footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3
       <div class="muted" id="lg-msg" style="font-size:13px"></div>
     </div>
     <div class="dlg-f"><span></span><span style="display:flex;gap:8px"><button type="button" class="btn" id="lg-cancel">ยกเลิก</button><button type="submit" class="btn primary">เข้าสู่ระบบ</button></span></div>
+  </form>
+</dialog>
+<dialog id="mv-dlg">
+  <form method="dialog" id="mv-form">
+    <div class="dlg-h"><h2>ย้ายรายการไปเป็นยอดของ รพ.สต.</h2></div>
+    <div class="dlg-b">
+      <div id="mv-info" style="background:var(--surface-2);border-radius:10px;padding:10px 12px"></div>
+      <label class="f">อำเภอ<select id="mv-dist"></select></label>
+      <label class="f">รพ.สต.<select id="mv-code"></select></label>
+      <label class="f">ชื่อผู้แก้ไข<input id="mv-who" maxlength="100" required></label>
+    </div>
+    <div class="dlg-f"><span></span><span style="display:flex;gap:8px"><button type="button" class="btn" id="mv-cancel">ยกเลิก</button><button type="submit" class="btn primary" id="mv-save">ย้ายรายการ</button></span></div>
   </form>
 </dialog>
 <dialog id="slip-dlg" style="max-width:720px">
@@ -886,7 +905,11 @@ function rebuild(){
   const ph=RAW.pub.hosp||{},pe=RAW.pub.ext||{},pn=RAW.priv.hospNotes||{},px=RAW.priv.ext||{};
   // ยอดที่ รพ.สต./ผู้บริจาคกรอกผ่านแบบฟอร์ม (queue) นับเข้าแดชบอร์ดทันที ยกเว้นรายการที่ถูกยกเลิก
   allEntries=Object.entries(RAW.queue||{}).map(([id,q])=>normEntry({id,...q})).filter(q=>q&&(Number(q.amount)>0||q.fix)).sort((a,b)=>(b.at||0)-(a.at||0));
-  const live=allEntries.filter(q=>q.status!=="rejected");
+  let live=allEntries.filter(q=>q.status!=="rejected");
+  // รายการที่ถูก "ย้ายไป รพ.สต." แล้ว → ไม่นับที่เดิม
+  const moved=new Set(live.filter(q=>q.moveFrom).map(q=>q.moveFrom));
+  allEntries.forEach(q=>{q.movedAway=moved.has(q.id)});
+  live=live.filter(q=>!moved.has(q.id));
   entrySum={};const r={};
   // เรียงตามเวลา: รายการปกติ = บวกเพิ่ม, รายการแก้ไข (fix) = ตั้งยอดรวมใหม่
   live.filter(q=>q.kind==="hosp"&&H.some(h=>h[1]===q.code)).slice().reverse().forEach(q=>{
@@ -1014,7 +1037,7 @@ function renderFix(){
   const c=$("#f2-code").value;if(!c)return;const cur=rec[c]?Number(rec[c].amount):0;
   $("#f2-cur").textContent=fmt(cur)+" บาท";
   const list=allEntries.filter(q=>q.kind==="hosp"&&q.code===c);
-  $("#f2-hist").innerHTML=list.length?list.map(q=>`<tr style="${q.status==="rejected"?"opacity:.45;text-decoration:line-through":""}"><td style="font-size:13px">${q.at?new Date(q.at).toLocaleString("th-TH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+" น.":""}${q.fix?' <span class="pill" style="background:#f0eaff;color:#5b34c4">แก้ไขยอด</span>':""}${q.mapped?' <span class="muted" style="font-size:11.5px">(กรอกเป็นชื่อเต็ม)</span>':""}${q.reason?`<div class="muted" style="font-size:12px">${esc(q.reason)}</div>`:""}</td><td class="r num" style="font-weight:700">${q.fix?"= ":"+"}${fmt(q.amount)}</td></tr>`).join(""):`<tr><td class="empty" style="border:0">ยังไม่มีรายการของ รพ.สต. นี้</td></tr>`;
+  $("#f2-hist").innerHTML=list.length?list.map(q=>`<tr style="${q.status==="rejected"?"opacity:.45;text-decoration:line-through":""}"><td style="font-size:13px">${q.at?new Date(q.at).toLocaleString("th-TH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+" น.":""}${q.fix?' <span class="pill" style="background:#f0eaff;color:#5b34c4">แก้ไขยอด</span>':""}${q.moveFrom?' <span class="pill ok">ย้ายมาจากช่องภายนอก</span>':""}${q.mapped?' <span class="muted" style="font-size:11.5px">(กรอกเป็นชื่อเต็ม)</span>':""}${q.reason?`<div class="muted" style="font-size:12px">${esc(q.reason)}</div>`:""}</td><td class="r num" style="font-weight:700">${q.fix?"= ":"+"}${fmt(q.amount)}</td></tr>`).join(""):`<tr><td class="empty" style="border:0">ยังไม่มีรายการของ รพ.สต. นี้</td></tr>`;
 }
 $("#f2-dist").addEventListener("change",fixCodes);$("#f2-code").addEventListener("change",renderFix);fixCodes();
 $("#f2-form").addEventListener("submit",async e=>{e.preventDefault();
@@ -1033,6 +1056,27 @@ $("#f2-form").addEventListener("submit",async e=>{e.preventDefault();
     $("#f2-ok").innerHTML=`✅ แก้ไขยอด <b>${esc(h[3])}</b> เป็น <b>${fmt(amt)} บาท</b> แล้ว แดชบอร์ดอัปเดตทันที`;$("#f2-ok").className="banner info show";
   }catch(err){console.warn(err);toast("แก้ไขไม่สำเร็จ — ผู้ดูแลต้องอัปเดตกฎ Rules ฉบับใหม่ก่อน")}
   finally{$("#f2-send").disabled=false}});
+
+// ================= ย้ายรายการที่ลงผิดช่อง → รพ.สต. =================
+function renderMoveList(){const el=$("#mv-list");if(!el)return;
+  const l=allEntries.filter(q=>q.kind!=="hosp"&&q.status!=="rejected"&&!q.movedAway);
+  el.innerHTML=l.length?l.map(q=>`<tr><td>${esc(q.name)}<div class="muted" style="font-size:12px"><span class="pill ${q.kind==="org"?"org":"per"}">${KIND[q.kind]||"บุคคล"}</span> ${q.at?new Date(q.at).toLocaleString("th-TH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+" น.":""}</div></td><td class="r num" style="font-weight:700">${fmt(q.amount)}</td><td style="width:1%"><button class="btn sm primary" data-mv="${esc(q.id)}" style="white-space:nowrap">ย้ายไป รพ.สต. →</button></td></tr>`).join(""):`<tr><td class="empty" style="border:0">ไม่มีรายการในช่องหน่วยงาน/บุคคลภายนอกที่กรอกผ่านแบบฟอร์ม</td></tr>`;
+}
+let mvItem=null;
+DISTRICTS.forEach(d=>$("#mv-dist").insertAdjacentHTML("beforeend",`<option>${esc(d)}</option>`));
+function mvCodes(){const d=$("#mv-dist").value;$("#mv-code").innerHTML=H.filter(h=>h[2]===d).map(h=>`<option value="${h[1]}">${esc(h[3])} (${h[1]})</option>`).join("")}
+$("#mv-dist").addEventListener("change",mvCodes);mvCodes();
+$("#mv-list").addEventListener("click",e=>{const b=e.target.closest("[data-mv]");if(!b)return;mvItem=allEntries.find(q=>q.id===b.dataset.mv);if(!mvItem)return;
+  $("#mv-info").innerHTML=`<b>${esc(mvItem.name)}</b> · ${fmt(mvItem.amount)} บาท`;$("#mv-who").value="";$("#mv-dlg").showModal()});
+$("#mv-cancel").onclick=()=>$("#mv-dlg").close();
+$("#mv-form").addEventListener("submit",async e=>{e.preventDefault();if(!mvItem||!DL)return;
+  const h=H.find(x=>x[1]===$("#mv-code").value);if(!h){toast("กรุณาเลือก รพ.สต.");return}
+  const who=$("#mv-who").value.trim();if(!who){toast("กรุณาใส่ชื่อผู้แก้ไข");return}
+  const q={kind:"hosp",code:h[1],name:h[3],amount:Number(mvItem.amount),moveFrom:mvItem.id,reason:("ย้ายจากช่อง"+(KIND[mvItem.kind]||"บุคคล")+"ภายนอก: "+mvItem.name).slice(0,200),date:mvItem.date||todayISO(),method:mvItem.method||"",receipt:false,hasSlip:false,status:"pending"};
+  $("#mv-save").disabled=true;
+  try{await DL.submit(q,null,{sender:who.slice(0,100),tel:"",note:q.reason});$("#mv-dlg").close();toast("ย้ายไป "+h[3]+" แล้ว ✓")}
+  catch(err){console.warn(err);toast("ย้ายไม่สำเร็จ — ผู้ดูแลต้องอัปเดตกฎ Rules ฉบับใหม่ก่อน")}
+  finally{$("#mv-save").disabled=false}});
 
 // ================= ตรวจสอบรายการ =================
 function renderQueue(){
@@ -1082,9 +1126,9 @@ function setAuth(user,admin){
 }
 
 // ================= เริ่มทำงาน =================
-function renderFeed(){const el=$("#feed");if(!el)return;const l=allEntries.filter(q=>q.status!=="rejected").slice(0,10);
-  el.innerHTML=l.length?l.map(q=>`<tr><td>${esc(q.name)}<div class="muted" style="font-size:12px">${q.kind==="hosp"?"อ."+esc((H.find(h=>h[1]===q.code)||[])[2]||""):KIND[q.kind]||""} · ${q.at?new Date(q.at).toLocaleString("th-TH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):""} น.</div></td><td class="r num" style="font-weight:700;white-space:nowrap">${q.fix?`<span style="color:#7a4fe0">✏️ แก้เป็น ${fmt(q.amount)}</span>`:"+"+fmt(q.amount)}</td></tr>`).join(""):`<tr><td class="empty" style="border:0">ยังไม่มีรายการแจ้งยอด</td></tr>`}
-function renderAll(){renderFeed();if($("#f2-code"))renderFix();renderDash();renderEntry();renderExt();renderQueue();renderPreview()}
+function renderFeed(){const el=$("#feed");if(!el)return;const l=allEntries.filter(q=>q.status!=="rejected"&&!q.movedAway).slice(0,10);
+  el.innerHTML=l.length?l.map(q=>`<tr><td>${esc(q.name)}<div class="muted" style="font-size:12px">${q.kind==="hosp"?"อ."+esc((H.find(h=>h[1]===q.code)||[])[2]||""):KIND[q.kind]||""} · ${q.at?new Date(q.at).toLocaleString("th-TH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):""} น.</div></td><td class="r num" style="font-weight:700;white-space:nowrap">${q.fix?`<span style="color:#7a4fe0">✏️ แก้เป็น ${fmt(q.amount)}</span>`:q.moveFrom?`<span style="color:#0b7d52">↪ ย้ายมา ${fmt(q.amount)}</span>`:"+"+fmt(q.amount)}</td></tr>`).join(""):`<tr><td class="empty" style="border:0">ยังไม่มีรายการแจ้งยอด</td></tr>`}
+function renderAll(){renderFeed();renderMoveList();if($("#f2-code"))renderFix();renderDash();renderEntry();renderExt();renderQueue();renderPreview()}
 function startApp(dl){
   DL=dl;
   const live=()=>{$("#sync").className="status-line live";$("#sync").innerHTML='<span class="dot"></span>ออนไลน์ · อัปเดตอัตโนมัติ '+new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})+" น."};
