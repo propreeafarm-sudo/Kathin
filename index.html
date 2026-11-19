@@ -310,6 +310,7 @@ footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3
   <nav class="tabs" aria-label="เมนู">
     <a href="#dashboard" data-view="dashboard">แดชบอร์ดผู้บริหาร</a>
     <a href="#form" data-view="form">📝 แจ้งยอด / ร่วมบริจาค</a>
+    <a href="#fix" data-view="fix">✏️ แก้ไขยอด</a>
     <a href="#queue" data-view="queue" class="admin-only">รายการที่แจ้ง<span class="badge" id="q-badge" style="display:none">0</span></a>
     <a href="#entry" data-view="entry" class="admin-only">ยอด รพ.สต.</a>
     <a href="#external" data-view="external" class="admin-only">ผู้บริจาคภายนอก</a>
@@ -404,11 +405,37 @@ footer.site{max-width:1240px;margin:0 auto;padding:0 24px 36px;color:var(--ink-3
         <h2>ข้อมูลสำหรับผู้ร่วมทำบุญ</h2>
         <ul style="margin:8px 0 0;padding-left:20px;color:var(--ink-2)">
           <li>กำหนดตัดยอด: <b id="p-deadline">วันศุกร์ที่ ๒๐ พ.ย. ๒๕๖๙ เวลา ๑๖.๓๐ น.</b></li>
-          <li>กดส่งแล้ว ยอดขึ้นแดชบอร์ดทันที ไม่ต้องรอตรวจสอบ</li><li>กรอกยอดผิด แจ้งกองสาธารณสุขเพื่อยกเลิกรายการ แล้วกรอกใหม่</li>
+          <li>กดส่งแล้ว ยอดขึ้นแดชบอร์ดทันที ไม่ต้องรอตรวจสอบ</li><li>กรอกยอดผิดหรือกรอกซ้ำ แก้เองได้ที่เมนู <a href="#fix">✏️ แก้ไขยอด</a></li>
           <li>รพ.สต. แจ้งยอดเพิ่มได้หลายครั้ง ระบบจะบวกรวมให้ (กรอกเฉพาะยอดที่เพิ่ม)</li>
           <li>สอบถาม: กองสาธารณสุข อบจ.สกลนคร</li>
         </ul>
         <div id="p-ok" class="banner info" style="margin-top:14px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FIX -->
+  <section class="view" id="v-fix">
+    <div class="g2" style="grid-template-columns:1.1fr 1fr">
+      <div class="card">
+        <h2>✏️ แก้ไขยอดที่กรอกผิด</h2>
+        <div class="hint">สำหรับ รพ.สต. ที่กรอกยอดผิด กรอกซ้ำ หรือกรอกเกิน · ใส่ “ยอดที่ถูกต้องรวมทั้งหมด” ของ รพ.สต. ระบบจะตั้งยอดใหม่ทันทีและเก็บประวัติการแก้ไขไว้</div>
+        <form id="f2-form" class="formgrid">
+          <label class="f">อำเภอ<select id="f2-dist"></select></label>
+          <label class="f">รพ.สต.<select id="f2-code"></select></label>
+          <div class="full" style="background:var(--surface-2);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center"><span style="color:var(--ink-2);font-weight:600">ยอดปัจจุบันในระบบ</span><b class="num" id="f2-cur" style="font-size:22px">0 บาท</b></div>
+          <label class="f full">ยอดที่ถูกต้อง (รวมทั้งหมดของ รพ.สต. นี้) — บาท<input id="f2-amt" type="number" min="0" step="0.01" class="amt" style="font-size:20px" required></label>
+          <label class="f">ชื่อผู้แก้ไข<input id="f2-sender" maxlength="100" required></label>
+          <label class="f">เบอร์ติดต่อ (ไม่แสดงบนหน้าเว็บ)<input id="f2-tel" maxlength="30" inputmode="tel"></label>
+          <label class="f full">เหตุผลการแก้ไข<input id="f2-reason" maxlength="200" required placeholder="เช่น กรอกซ้ำ 2 ครั้ง / พิมพ์ 370 แทน 3,700"></label>
+          <div class="full" style="display:flex;justify-content:flex-end"><button type="submit" class="btn primary" id="f2-send">บันทึกยอดที่ถูกต้อง</button></div>
+        </form>
+        <div id="f2-ok" class="banner info" style="margin-top:12px"></div>
+      </div>
+      <div class="card" style="align-self:start">
+        <h2>ประวัติการแจ้งยอดของ รพ.สต. นี้</h2>
+        <div class="hint">“+” คือยอดที่แจ้งเพิ่ม · “=” คือการแก้ไขยอดรวม</div>
+        <table><tbody id="f2-hist"></tbody></table>
       </div>
     </div>
   </section>
@@ -601,7 +628,7 @@ function bahtText(n){
 }
 
 // routing
-const VIEWS=["dashboard","form","queue","entry","external","report","import","guide"],ADMIN_VIEWS=["queue","entry","external","import"];
+const VIEWS=["dashboard","form","fix","queue","entry","external","report","import","guide"],ADMIN_VIEWS=["queue","entry","external","import"];
 function route(){const v=(location.hash||"#dashboard").slice(1);let ok=VIEWS.includes(v)?v:"dashboard";if(ADMIN_VIEWS.includes(ok)&&!isAdmin)ok="dashboard";
   document.querySelectorAll("section.view").forEach(s=>s.classList.toggle("on",s.id==="v-"+ok));
   document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.view===ok)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
@@ -851,14 +878,21 @@ $("#dl-xlsx").onclick=async()=>{
 // ================= ส่วนเชื่อมต่อฐานข้อมูล (Firebase) =================
 let RAW={pub:{hosp:{},ext:{},cfg:{}},priv:{hospNotes:{},ext:{}},queue:{}};
 let queueList=[],allEntries=[],entrySum={};
+// ชื่อ รพ.สต. ที่กรอกเต็ม เช่น "โรงพยาบาลส่งเสริมสุขภาพตำบลบ้านโคกก่องใหญ่" → "รพ.สต.บ้านโคกก่องใหญ่"
+const normName=s=>String(s||"").replace(/\s+/g,"").replace(/^(โรงพยาบาลส่งเสริมสุขภาพตำบล|รพ\.?สต\.?)/,"รพ.สต.");
+const NAME2CODE={};(()=>{const cnt={};H.forEach(h=>{const n=normName(h[3]);cnt[n]=(cnt[n]||0)+1;NAME2CODE[n]=h[1]});Object.keys(cnt).forEach(n=>{if(cnt[n]>1)delete NAME2CODE[n]})})();
+function normEntry(q){if(q.kind!=="hosp"){const c=NAME2CODE[normName(q.name)];if(c){const h=H.find(x=>x[1]===c);return{...q,kind:"hosp",code:c,name:h[3],mapped:true}}}
+  else if(q.code){const h=H.find(x=>x[1]===q.code);if(h)return{...q,name:h[3]}}return q}
 function rebuild(){
   const ph=RAW.pub.hosp||{},pe=RAW.pub.ext||{},pn=RAW.priv.hospNotes||{},px=RAW.priv.ext||{};
   // ยอดที่ รพ.สต./ผู้บริจาคกรอกผ่านแบบฟอร์ม (queue) นับเข้าแดชบอร์ดทันที ยกเว้นรายการที่ถูกยกเลิก
-  allEntries=Object.entries(RAW.queue||{}).map(([id,q])=>({id,...q})).filter(q=>q&&Number(q.amount)>0).sort((a,b)=>(b.at||0)-(a.at||0));
+  allEntries=Object.entries(RAW.queue||{}).map(([id,q])=>normEntry({id,...q})).filter(q=>q&&(Number(q.amount)>0||q.fix)).sort((a,b)=>(b.at||0)-(a.at||0));
   const live=allEntries.filter(q=>q.status!=="rejected");
   entrySum={};const r={};
-  live.filter(q=>q.kind==="hosp"&&H.some(h=>h[1]===q.code)).slice().reverse().forEach(q=>{entrySum[q.code]=(entrySum[q.code]||0)+Number(q.amount);
-    r[q.code]={amount:entrySum[q.code],date:q.date||"",method:q.method||"",updatedAt:q.at||0,entries:((r[q.code]&&r[q.code].entries)||0)+1}});
+  // เรียงตามเวลา: รายการปกติ = บวกเพิ่ม, รายการแก้ไข (fix) = ตั้งยอดรวมใหม่
+  live.filter(q=>q.kind==="hosp"&&H.some(h=>h[1]===q.code)).slice().reverse().forEach(q=>{
+    entrySum[q.code]=q.fix?Number(q.amount):(entrySum[q.code]||0)+Number(q.amount);
+    const p=r[q.code]||{};r[q.code]={amount:Math.round(entrySum[q.code]*100)/100,date:q.fix?(p.date||q.date||""):(q.date||""),method:q.fix?(p.method||""):(q.method||""),updatedAt:q.at||0,entries:(p.entries||0)+(q.fix?0:1),fixed:q.fix?true:p.fixed}});
   Object.keys(ph).forEach(c=>{if(!H.some(h=>h[1]===c))return;const adj=Number(ph[c].amount)||0;const b=r[c]||{amount:0,entries:0};
     r[c]={...b,...ph[c],...(pn[c]||{}),amount:Math.round(((b.amount||0)+adj)*100)/100,adj,entries:b.entries}});
   rec=r;
@@ -974,6 +1008,33 @@ $("#p-form").addEventListener("submit",async e=>{e.preventDefault();
   finally{$("#p-send").disabled=false;$("#p-send").textContent="ส่งข้อมูล"}
 });
 
+// ================= แก้ไขยอด (ไม่ต้องล็อกอิน) =================
+DISTRICTS.forEach(d=>$("#f2-dist").insertAdjacentHTML("beforeend",`<option>${esc(d)}</option>`));
+function fixCodes(){const d=$("#f2-dist").value;$("#f2-code").innerHTML=H.filter(h=>h[2]===d).map(h=>`<option value="${h[1]}">${esc(h[3])} (${h[1]})</option>`).join("");renderFix()}
+function renderFix(){
+  const c=$("#f2-code").value;if(!c)return;const cur=rec[c]?Number(rec[c].amount):0;
+  $("#f2-cur").textContent=fmt(cur)+" บาท";
+  const list=allEntries.filter(q=>q.kind==="hosp"&&q.code===c);
+  $("#f2-hist").innerHTML=list.length?list.map(q=>`<tr style="${q.status==="rejected"?"opacity:.45;text-decoration:line-through":""}"><td style="font-size:13px">${q.at?new Date(q.at).toLocaleString("th-TH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+" น.":""}${q.fix?' <span class="pill" style="background:#f0eaff;color:#5b34c4">แก้ไขยอด</span>':""}${q.mapped?' <span class="muted" style="font-size:11.5px">(กรอกเป็นชื่อเต็ม)</span>':""}${q.reason?`<div class="muted" style="font-size:12px">${esc(q.reason)}</div>`:""}</td><td class="r num" style="font-weight:700">${q.fix?"= ":"+"}${fmt(q.amount)}</td></tr>`).join(""):`<tr><td class="empty" style="border:0">ยังไม่มีรายการของ รพ.สต. นี้</td></tr>`;
+}
+$("#f2-dist").addEventListener("change",fixCodes);$("#f2-code").addEventListener("change",renderFix);fixCodes();
+$("#f2-form").addEventListener("submit",async e=>{e.preventDefault();
+  if(!DL){toast("ยังเชื่อมต่อฐานข้อมูลไม่ได้");return}
+  const c=$("#f2-code").value,h=H.find(x=>x[1]===c);if(!h){toast("กรุณาเลือก รพ.สต.");return}
+  const v=$("#f2-amt").value.trim();const amt=Math.round(Number(v)*100)/100;
+  if(v===""||!(amt>=0)){toast("กรุณาใส่ยอดที่ถูกต้อง");return}
+  const who=$("#f2-sender").value.trim(),why=$("#f2-reason").value.trim();
+  if(!who||!why){toast("กรุณาใส่ชื่อผู้แก้ไขและเหตุผล");return}
+  const cur=rec[c]?Number(rec[c].amount):0;
+  if(!await confirmBox("ยืนยันแก้ไขยอด?",`<b>${esc(h[3])}</b><br>ยอดเดิม ${fmt(cur)} บาท → <b>ยอดใหม่ ${fmt(amt)} บาท</b><br><span class="muted">ระบบจะบันทึกประวัติการแก้ไขไว้ทุกครั้ง</span>`))return;
+  const q={kind:"hosp",code:c,name:h[3],amount:amt,fix:true,reason:why.slice(0,200),date:todayISO(),method:"",receipt:false,hasSlip:false,status:"pending"};
+  $("#f2-send").disabled=true;
+  try{await DL.submit(q,null,{sender:who.slice(0,100),tel:$("#f2-tel").value.trim().slice(0,30),note:why.slice(0,200)});
+    toast("แก้ไขยอดเรียบร้อย ✓");$("#f2-amt").value="";$("#f2-reason").value="";
+    $("#f2-ok").innerHTML=`✅ แก้ไขยอด <b>${esc(h[3])}</b> เป็น <b>${fmt(amt)} บาท</b> แล้ว แดชบอร์ดอัปเดตทันที`;$("#f2-ok").className="banner info show";
+  }catch(err){console.warn(err);toast("แก้ไขไม่สำเร็จ — ผู้ดูแลต้องอัปเดตกฎ Rules ฉบับใหม่ก่อน")}
+  finally{$("#f2-send").disabled=false}});
+
 // ================= ตรวจสอบรายการ =================
 function renderQueue(){
   const n=allEntries.length;$("#q-badge").textContent=n;$("#q-badge").style.display=n?"":"none";
@@ -981,7 +1042,7 @@ function renderQueue(){
   $("#qlist").innerHTML=n?allEntries.map(q=>{const c=(RAW.priv.contacts||{})[q.id]||{},rj=q.status==="rejected";return `<div class="qcard" style="${rj?"opacity:.55":""}"><div class="top"><div><span class="pill ${q.kind==="hosp"?"ok":q.kind==="org"?"org":"per"}">${q.kind==="hosp"?"รพ.สต.":KIND[q.kind]}</span> <b>${esc(q.name)}</b>${q.code?` <span class="muted">(${esc(q.code)})</span>`:""} ${rj?'<span class="pill no">ยกเลิกแล้ว</span>':""}
     <div class="muted" style="font-size:13px">${esc(c.sender||q.sender||"-")} ${(c.tel||q.tel)?"· "+esc(c.tel||q.tel):""} · ${q.at?new Date(q.at).toLocaleString("th-TH",{dateStyle:"short",timeStyle:"short"}):""} · ${esc(thDate(q.date))} ${esc(q.method||"")}${q.receipt?" · 📜 ขอใบอนุโมทนาบัตร":""}</div>
     ${(c.note||q.note)?`<div style="font-size:13px">${esc(c.note||q.note)}</div>`:""}${q.hasSlip?`<div class="links"><a data-slip="${esc(q.id)}">🧾 ดูสลิป</a></div>`:""}</div>
-    <div style="text-align:right"><div class="amt num">${fmt(q.amount)} บาท</div></div></div>
+    <div style="text-align:right">${q.fix?'<div class="pill" style="background:#f0eaff;color:#5b34c4">✏️ แก้ไขยอดรวมเป็น</div>':""}<div class="amt num">${fmt(q.amount)} บาท</div>${q.reason?`<div class="muted" style="font-size:12px">เหตุผล: ${esc(q.reason)}</div>`:""}</div></div>
     <div class="toolbar" style="margin:10px 0 0;justify-content:flex-end">${rj?`<button class="btn sm" data-q="${esc(q.id)}" data-a="restore">นำกลับมานับยอด</button>`:`<button class="btn sm" data-q="${esc(q.id)}" data-a="reject" style="color:var(--crit)">ยกเลิกรายการนี้ (ไม่นับยอด)</button>`}</div></div>`}).join(""):`<div class="empty">ยังไม่มีรายการแจ้งยอด</div>`;
 }
 async function showSlip(id){
@@ -1022,9 +1083,9 @@ function setAuth(user,admin){
 }
 
 // ================= เริ่มทำงาน =================
-function renderFeed(){const el=$("#feed");if(!el)return;const l=allEntries.filter(q=>q.status!=="rejected").slice(0,8);
-  el.innerHTML=l.length?l.map(q=>`<tr><td>${esc(q.name)}<div class="muted" style="font-size:12px">${q.kind==="hosp"?"อ."+esc((H.find(h=>h[1]===q.code)||[])[2]||""):KIND[q.kind]||""} · ${q.at?new Date(q.at).toLocaleString("th-TH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):""} น.</div></td><td class="r num" style="font-weight:700;white-space:nowrap">+${fmt(q.amount)}</td></tr>`).join(""):`<tr><td class="empty" style="border:0">ยังไม่มีรายการแจ้งยอด</td></tr>`}
-function renderAll(){renderFeed();renderDash();renderEntry();renderExt();renderQueue();renderPreview()}
+function renderFeed(){const el=$("#feed");if(!el)return;const l=allEntries.filter(q=>q.status!=="rejected").slice(0,10);
+  el.innerHTML=l.length?l.map(q=>`<tr><td>${esc(q.name)}<div class="muted" style="font-size:12px">${q.kind==="hosp"?"อ."+esc((H.find(h=>h[1]===q.code)||[])[2]||""):KIND[q.kind]||""} · ${q.at?new Date(q.at).toLocaleString("th-TH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):""} น.</div></td><td class="r num" style="font-weight:700;white-space:nowrap">${q.fix?`<span style="color:#7a4fe0">✏️ แก้เป็น ${fmt(q.amount)}</span>`:"+"+fmt(q.amount)}</td></tr>`).join(""):`<tr><td class="empty" style="border:0">ยังไม่มีรายการแจ้งยอด</td></tr>`}
+function renderAll(){renderFeed();if($("#f2-code"))renderFix();renderDash();renderEntry();renderExt();renderQueue();renderPreview()}
 function startApp(dl){
   DL=dl;
   const live=()=>{$("#sync").className="status-line live";$("#sync").innerHTML='<span class="dot"></span>ออนไลน์ · อัปเดตอัตโนมัติ '+new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})+" น."};
